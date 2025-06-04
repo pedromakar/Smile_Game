@@ -54,6 +54,7 @@
       font-weight: 500;
       font-size: 0.9rem;
       letter-spacing: 0.04em;
+      cursor: pointer;
     }
 
     .btn-minimal:hover {
@@ -65,10 +66,10 @@
       width: 120px;
       height: 180px;
       border-radius: 8px;
-      display: inline-block;
       margin: 10px;
       perspective: 1000px;
       cursor: pointer;
+      display: inline-block;
     }
 
     .conteudo-carta {
@@ -154,85 +155,90 @@
   <script>
     const baralho = [
       'https://w7.pngwing.com/pngs/467/401/png-transparent-skat-playing-card-ace-card-game-standard-52-card-deck-suit-text-logo-monochrome.png',
-      'https://media.istockphoto.com/id/149138137/pt/foto/cart%C3%A3o-de-jogo-quatro-de-paus.jpg?s=612x612&w=0&k=20&c=PmH--MY6qSnGh8pmYSai3YB-xvmtJkDzP962XKoj8Zw=',
-      'https://w7.pngwing.com/pngs/467/401/png-transparent-skat-playing-card-ace-card-game-standard-52-card-deck-suit-text-logo-monochrome.png',
       'https://media.istockphoto.com/id/149138137/pt/foto/cart%C3%A3o-de-jogo-quatro-de-paus.jpg?s=612x612&w=0&k=20&c=PmH--MY6qSnGh8pmYSai3YB-xvmtJkDzP962XKoj8Zw='
     ];
 
     const cartaCoringa = 'https://images.vexels.com/content/125526/preview/joker-card-silhouette-11ab87.png';
 
-    let coringaIndex = Math.floor(Math.random() * 3);
     let totalCartas = 3;
+    let coringaIndex = Math.floor(Math.random() * totalCartas);
     let tentativas = 1;
     let acertos = 0;
     let cartasViradas = [];
+
+    function criarCartaElemento(i) {
+      const carta = document.createElement('div');
+      carta.className = 'carta';
+      carta.id = i;
+      carta.onclick = () => verifica(carta);
+
+      const conteudo = document.createElement('div');
+      conteudo.className = 'conteudo-carta';
+
+      const frente = document.createElement('div');
+      frente.className = 'face frente';
+      frente.innerText = '🂠';
+
+      const verso = document.createElement('img');
+      verso.className = 'face verso';
+      verso.src = (i === coringaIndex) ? cartaCoringa : baralho[i % baralho.length];
+      verso.alt = 'Carta revelada';
+
+      conteudo.append(frente, verso);
+      carta.appendChild(conteudo);
+
+      return carta;
+    }
 
     function criarCartas() {
       const linha = document.getElementById('linha1');
       linha.innerHTML = '';
       for (let i = 0; i < totalCartas; i++) {
-        const carta = document.createElement('div');
-        carta.className = 'carta';
-        carta.id = i;
-        carta.onclick = () => verifica(carta);
-
-        const conteudo = document.createElement('div');
-        conteudo.className = 'conteudo-carta';
-
-        const frente = document.createElement('div');
-        frente.className = 'face frente';
-        frente.innerText = '🂠';
-
-        const verso = document.createElement('img');
-        verso.className = 'face verso';
-        verso.src = i === coringaIndex ? cartaCoringa : baralho[i % baralho.length];
-        verso.alt = "Carta revelada";
-
-        conteudo.appendChild(frente);
-        conteudo.appendChild(verso);
-        carta.appendChild(conteudo);
-
-        linha.appendChild(carta);
+        linha.appendChild(criarCartaElemento(i));
       }
     }
 
-    function verifica(elemento) {
-      if (elemento.classList.contains('virada') || tentativas <= 0) return;
+    function atualizarPlacar() {
+      document.getElementById('tentativas').textContent = tentativas;
+      document.getElementById('acertos').textContent = acertos;
+    }
 
-      elemento.classList.add('virada');
-      cartasViradas.push(elemento);
-      const id = parseInt(elemento.id);
+    function verifica(carta) {
+      if (carta.classList.contains('virada') || tentativas <= 0) return;
+
+      carta.classList.add('virada');
+      cartasViradas.push(carta);
+
+      const id = +carta.id;
       const resposta = document.getElementById('resposta');
-      const tentativasElement = document.getElementById('tentativas');
-      const acertosElement = document.getElementById('acertos');
 
       if (id === coringaIndex) {
         acertos++;
         resposta.textContent = 'Você encontrou o Coringa! Uma nova carta foi adicionada.';
         resposta.className = 'text-success fw-bold';
+
         setTimeout(() => {
           tentativas++;
           totalCartas++;
           coringaIndex = Math.floor(Math.random() * totalCartas);
           resposta.textContent = '';
+          cartasViradas = [];
           criarCartas();
+          atualizarPlacar();
         }, 1500);
       } else {
         tentativas--;
         resposta.textContent = 'Não foi dessa vez. Tente novamente!';
         resposta.className = 'text-danger fw-bold';
-      }
 
-      tentativasElement.textContent = tentativas;
-      acertosElement.textContent = acertos;
-
-      if (tentativas <= 0) {
-        resposta.textContent = 'Você perdeu! O Coringa estava aqui:';
-        resposta.className = 'text-danger fw-bold';
-        setTimeout(() => {
-          document.getElementById(coringaIndex).classList.add('virada');
-          cartasViradas.forEach(carta => carta.classList.remove('virada'));
-        }, 1500);
+        if (tentativas <= 0) {
+          resposta.textContent = 'Você perdeu! O Coringa estava aqui:';
+          setTimeout(() => {
+            document.getElementById(coringaIndex).classList.add('virada');
+            cartasViradas.forEach(c => c.classList.remove('virada'));
+          }, 1500);
+        }
+        atualizarPlacar();
       }
     }
 
@@ -244,8 +250,7 @@
       cartasViradas = [];
       document.getElementById('resposta').textContent = '';
       criarCartas();
-      document.getElementById('tentativas').textContent = tentativas;
-      document.getElementById('acertos').textContent = acertos;
+      atualizarPlacar();
     }
 
     function adicionarCarta() {
@@ -253,11 +258,13 @@
         totalCartas++;
         coringaIndex = Math.floor(Math.random() * totalCartas);
         document.getElementById('resposta').textContent = '';
+        cartasViradas = [];
         criarCartas();
       }
     }
 
     criarCartas();
+    atualizarPlacar();
   </script>
 </body>
 
