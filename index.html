@@ -67,6 +67,12 @@
       background-color: #2a2a2a;
       color: #fff;
     }
+
+    .placar {
+      font-size: 1.2rem;
+      color: #fff;
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 
@@ -74,6 +80,11 @@
   <div id="principal" class="container text-center mt-4">
     <h1 class="mb-3">Onde está o Coringa?</h1>
     <p class="mb-4">Tente encontrar o coringa escondido entre as cartas.</p>
+
+    <div id="placar" class="placar">
+      <p>Tentativas restantes: <span id="tentativas">1</span></p>
+      <p>Acertos: <span id="acertos">0</span></p>
+    </div>
 
     <div id="linha1" class="d-flex justify-content-center flex-wrap gap-2 mb-4"></div>
 
@@ -87,16 +98,19 @@
 
   <script>
     const baralho = [
-      'imagem/card_king.png',
-      'imagem/card_queen.png',
-      'imagem/card_king.png',
-      'imagem/card_queen.png'
+      'https://w7.pngwing.com/pngs/467/401/png-transparent-skat-playing-card-ace-card-game-standard-52-card-deck-suit-text-logo-monochrome.png',
+      'https://media.istockphoto.com/id/149138137/pt/foto/cart%C3%A3o-de-jogo-quatro-de-paus.jpg?s=612x612&w=0&k=20&c=PmH--MY6qSnGh8pmYSai3YB-xvmtJkDzP962XKoj8Zw=',
+      'https://w7.pngwing.com/pngs/467/401/png-transparent-skat-playing-card-ace-card-game-standard-52-card-deck-suit-text-logo-monochrome.png',
+      'https://media.istockphoto.com/id/149138137/pt/foto/cart%C3%A3o-de-jogo-quatro-de-paus.jpg?s=612x612&w=0&k=20&c=PmH--MY6qSnGh8pmYSai3YB-xvmtJkDzP962XKoj8Zw='
     ];
 
-    const cartaCoringa = 'imagem/card_joker.png';
+    const cartaCoringa = 'https://images.vexels.com/content/125526/preview/joker-card-silhouette-11ab87.png';
 
     let coringaIndex = Math.floor(Math.random() * 3);
     let totalCartas = 3;
+    let tentativas = 1; // Inicia com 1 tentativa
+    let acertos = 0; // Inicializa a contagem de acertos
+    let cartasViradas = []; // Armazena as cartas que foram viradas
 
     function criarCartas() {
       const linha = document.getElementById('linha1');
@@ -128,37 +142,71 @@
     }
 
     function verifica(elemento) {
-      if (elemento.classList.contains('virada')) return;
+      if (elemento.classList.contains('virada') || tentativas <= 0) return;
+
       elemento.classList.add('virada');
+      cartasViradas.push(elemento); // Armazena a carta virada
       const id = parseInt(elemento.id);
       const resposta = document.getElementById('resposta');
+      const tentativasElement = document.getElementById('tentativas');
+      const acertosElement = document.getElementById('acertos');
+
       if (id === coringaIndex) {
+        acertos++;
         resposta.textContent = 'Você encontrou o Coringa! Uma nova carta foi adicionada.';
         resposta.className = 'text-success fw-bold';
         setTimeout(() => {
+          // Adiciona uma nova tentativa e aumenta a quantidade de cartas
+          tentativas++;
           totalCartas++;
           coringaIndex = Math.floor(Math.random() * totalCartas);
           resposta.textContent = '';
           criarCartas();
         }, 1500);
       } else {
+        tentativas--;
         resposta.textContent = 'Não foi dessa vez. Tente novamente!';
         resposta.className = 'text-danger fw-bold';
+      }
+
+      // Atualiza os valores do placar
+      tentativasElement.textContent = tentativas;
+      acertosElement.textContent = acertos;
+
+      // Verifica se acabou as tentativas
+      if (tentativas <= 0) {
+        resposta.textContent = 'Você perdeu! O Coringa estava aqui:';
+        resposta.className = 'text-danger fw-bold';
+        setTimeout(() => {
+          // Revela a carta com o Coringa
+          document.getElementById(coringaIndex).classList.add('virada');
+          // Vira as cartas que estavam viradas novamente
+          cartasViradas.forEach(carta => {
+            carta.classList.remove('virada');
+          });
+        }, 1500);
       }
     }
 
     function jogarNovamente() {
-      totalCartas = 3;
-      coringaIndex = Math.floor(Math.random() * totalCartas);
+      tentativas = 1; // Reinicia tentativas
+      acertos = 0; // Reinicia acertos
+      totalCartas = 3; // Reseta as cartas
+      coringaIndex = Math.floor(Math.random() * totalCartas); // Randomiza novamente a posição do coringa
+      cartasViradas = []; // Reseta as cartas viradas
       document.getElementById('resposta').textContent = '';
       criarCartas();
+      document.getElementById('tentativas').textContent = tentativas;
+      document.getElementById('acertos').textContent = acertos;
     }
 
     function adicionarCarta() {
-      totalCartas++;
-      coringaIndex = Math.floor(Math.random() * totalCartas);
-      document.getElementById('resposta').textContent = '';
-      criarCartas();
+      if (tentativas > 0) {
+        totalCartas++;
+        coringaIndex = Math.floor(Math.random() * totalCartas);
+        document.getElementById('resposta').textContent = '';
+        criarCartas();
+      }
     }
 
     criarCartas();
